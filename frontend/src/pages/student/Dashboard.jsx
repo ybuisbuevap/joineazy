@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import Navbar from '../../components/Navbar.jsx';
+import { Button } from '../../components/ui/button.jsx';
+import { Input } from '../../components/ui/input.jsx';
+import { Badge } from '../../components/ui/badge.jsx';
+import { Progress } from '../../components/ui/progress.jsx';
+import { Separator } from '../../components/ui/separator.jsx';
 
 export default function StudentDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [groups, setGroups] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [progress, setProgress] = useState(null);
-  const [pendingConfirm, setPendingConfirm] = useState(null); // assignment id awaiting "yes"
+  const [pendingConfirm, setPendingConfirm] = useState(null);
 
   async function loadGroups() {
     const res = await api.get('/groups/mine');
@@ -63,108 +69,108 @@ export default function StudentDashboard() {
     loadProgress(activeGroupId);
   }
 
+  const activeGroup = groups.find((g) => g.id === activeGroupId);
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Welcome, {user?.name}</h1>
-          <button onClick={logout} className="text-sm text-red-600">Log out</button>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <h1 className="font-display text-2xl font-semibold mb-1">Welcome, {user?.name}</h1>
+        <p className="text-muted-foreground text-sm mb-8">
+          {activeGroup ? `Viewing progress for ${activeGroup.name}` : 'Create a group to get started.'}
+        </p>
 
         {progress && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <p className="text-sm text-gray-600 mb-2">
-              Group progress: {progress.done} / {progress.total} assignments submitted
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-green-500 h-3 rounded-full transition-all"
-                style={{ width: `${progress.percent}%` }}
-              />
+          <div className="mb-10">
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="text-sm font-medium">Group progress</span>
+              <span className="text-sm text-muted-foreground">{progress.done} / {progress.total} submitted</span>
             </div>
+            <Progress value={progress.percent} />
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <section className="bg-white rounded-lg shadow-sm p-4">
-            <h2 className="font-medium mb-3">Your groups</h2>
-            <ul className="mb-4 space-y-1">
+        <div className="grid md:grid-cols-2 gap-10">
+          <section>
+            <h2 className="font-display font-semibold mb-4">Your groups</h2>
+            <ul className="space-y-1 mb-5">
               {groups.map((g) => (
                 <li key={g.id}>
                   <button
                     onClick={() => setActiveGroupId(g.id)}
-                    className={`text-sm ${activeGroupId === g.id ? 'font-semibold text-blue-600' : 'text-gray-700'}`}
+                    className={`text-sm py-1 ${activeGroupId === g.id ? 'font-semibold text-primary' : 'text-foreground/80 hover:text-foreground'}`}
                   >
                     {g.name}
                   </button>
                 </li>
               ))}
-              {groups.length === 0 && <p className="text-sm text-gray-500">No groups yet.</p>}
+              {groups.length === 0 && <p className="text-sm text-muted-foreground">No groups yet.</p>}
             </ul>
 
-            <form onSubmit={createGroup} className="flex gap-2 mb-3">
-              <input
+            <form onSubmit={createGroup} className="flex gap-2 mb-4">
+              <Input
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
                 placeholder="New group name"
-                className="flex-1 border rounded px-2 py-1 text-sm"
               />
-              <button className="bg-blue-600 text-white text-sm px-3 rounded">Create</button>
+              <Button type="submit" variant="outline">Create</Button>
             </form>
 
             {activeGroupId && (
-              <form onSubmit={addMember} className="flex gap-2">
-                <input
-                  value={memberEmail}
-                  onChange={(e) => setMemberEmail(e.target.value)}
-                  placeholder="Add member by email"
-                  className="flex-1 border rounded px-2 py-1 text-sm"
-                />
-                <button className="bg-gray-700 text-white text-sm px-3 rounded">Add</button>
-              </form>
+              <>
+                <Separator className="mb-4" />
+                <form onSubmit={addMember} className="flex gap-2">
+                  <Input
+                    value={memberEmail}
+                    onChange={(e) => setMemberEmail(e.target.value)}
+                    placeholder="Add member by email"
+                  />
+                  <Button type="submit" variant="outline">Add</Button>
+                </form>
+              </>
             )}
           </section>
 
-          <section className="bg-white rounded-lg shadow-sm p-4">
-            <h2 className="font-medium mb-3">Assignments</h2>
-            <ul className="space-y-3">
+          <section>
+            <h2 className="font-display font-semibold mb-4">Assignments</h2>
+            <ul className="space-y-4">
               {assignments.map((a) => (
-                <li key={a.id} className="border rounded p-3">
+                <li key={a.id} className="pb-4 border-b border-border last:border-0">
                   <p className="font-medium text-sm">{a.title}</p>
-                  {a.due_date && <p className="text-xs text-gray-500">Due: {new Date(a.due_date).toLocaleString()}</p>}
+                  {a.due_date && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Due {new Date(a.due_date).toLocaleString()}
+                    </p>
+                  )}
                   {a.onedrive_link && (
-                    <a href={a.onedrive_link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 block mt-1">
+                    <a href={a.onedrive_link} target="_blank" rel="noreferrer" className="text-xs text-primary block mt-1">
                       Open OneDrive link
                     </a>
                   )}
 
                   {pendingConfirm === a.id ? (
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        onClick={() => finalizeSubmission(a.id)}
-                        className="bg-green-600 text-white text-xs px-3 py-1 rounded"
-                      >
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" variant="success" onClick={() => finalizeSubmission(a.id)}>
                         Confirm submission
-                      </button>
-                      <button
-                        onClick={() => setPendingConfirm(null)}
-                        className="text-xs px-3 py-1 rounded border"
-                      >
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setPendingConfirm(null)}>
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setPendingConfirm(a.id)}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3"
                       disabled={!activeGroupId}
-                      className="mt-2 text-xs px-3 py-1 rounded border border-green-600 text-green-700 disabled:opacity-40"
+                      onClick={() => setPendingConfirm(a.id)}
                     >
                       Yes, I have submitted
-                    </button>
+                    </Button>
                   )}
                 </li>
               ))}
-              {assignments.length === 0 && <p className="text-sm text-gray-500">No assignments posted yet.</p>}
+              {assignments.length === 0 && <p className="text-sm text-muted-foreground">No assignments posted yet.</p>}
             </ul>
           </section>
         </div>

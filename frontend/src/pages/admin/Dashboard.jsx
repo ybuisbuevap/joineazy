@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/client.js';
-import { useAuth } from '../../context/AuthContext.jsx';
+import Navbar from '../../components/Navbar.jsx';
+import { Button } from '../../components/ui/button.jsx';
+import { Input } from '../../components/ui/input.jsx';
+import { Label } from '../../components/ui/label.jsx';
+import { Badge } from '../../components/ui/badge.jsx';
+import { Separator } from '../../components/ui/separator.jsx';
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
   const [form, setForm] = useState({ title: '', description: '', due_date: '', onedrive_link: '' });
   const [progress, setProgress] = useState(null);
   const [message, setMessage] = useState('');
@@ -35,65 +39,83 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Admin dashboard - {user?.name}</h1>
-          <button onClick={logout} className="text-sm text-red-600">Log out</button>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="max-w-5xl mx-auto px-6 py-10">
+        <h1 className="font-display text-2xl font-semibold mb-8">Admin dashboard</h1>
 
         {progress && (
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <StatCard label="Groups" value={progress.summary.totalGroups} />
-            <StatCard label="Assignments" value={progress.summary.totalAssignments} />
-            <StatCard label="Completion" value={`${progress.summary.completionPercent}%`} />
+          <div className="grid grid-cols-3 gap-6 mb-10">
+            <Stat label="Groups" value={progress.summary.totalGroups} />
+            <Stat label="Assignments" value={progress.summary.totalAssignments} />
+            <Stat label="Completion" value={`${progress.summary.completionPercent}%`} accent />
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <section className="bg-white rounded-lg shadow-sm p-4">
-            <h2 className="font-medium mb-3">Post a new assignment</h2>
-            {message && <p className="text-sm text-blue-700 mb-2">{message}</p>}
-            <form onSubmit={createAssignment} className="space-y-2">
-              <input placeholder="Title" value={form.title} onChange={update('title')} className="w-full border rounded px-2 py-1 text-sm" required />
-              <textarea placeholder="Description" value={form.description} onChange={update('description')} className="w-full border rounded px-2 py-1 text-sm" rows={3} />
-              <input type="datetime-local" value={form.due_date} onChange={update('due_date')} className="w-full border rounded px-2 py-1 text-sm" />
-              <input placeholder="OneDrive link" value={form.onedrive_link} onChange={update('onedrive_link')} className="w-full border rounded px-2 py-1 text-sm" />
-              <button className="bg-blue-600 text-white text-sm px-3 py-2 rounded w-full">Post assignment</button>
+        <div className="grid md:grid-cols-2 gap-10">
+          <section>
+            <h2 className="font-display font-semibold mb-4">Post a new assignment</h2>
+            {message && <p className="text-sm text-primary mb-3">{message}</p>}
+            <form onSubmit={createAssignment} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="title">Title</Label>
+                <Input id="title" value={form.title} onChange={update('title')} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="description">Description</Label>
+                <textarea
+                  id="description"
+                  value={form.description}
+                  onChange={update('description')}
+                  rows={3}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="due">Due date</Label>
+                <Input id="due" type="datetime-local" value={form.due_date} onChange={update('due_date')} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="link">OneDrive link</Label>
+                <Input id="link" value={form.onedrive_link} onChange={update('onedrive_link')} />
+              </div>
+              <Button type="submit" className="w-full">Post assignment</Button>
             </form>
           </section>
 
-          <section className="bg-white rounded-lg shadow-sm p-4 overflow-x-auto">
-            <h2 className="font-medium mb-3">Group-wise submission tracking</h2>
+          <section>
+            <h2 className="font-display font-semibold mb-4">Group-wise submission tracking</h2>
             {progress && progress.matrix.length > 0 ? (
-              <table className="text-sm w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left py-1 pr-2">Assignment</th>
-                    {progress.matrix[0].groups.map((g) => (
-                      <th key={g.group_id} className="text-left py-1 pr-2">{g.name}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {progress.matrix.map((row) => (
-                    <tr key={row.assignment_id} className="border-t">
-                      <td className="py-1 pr-2">{row.title}</td>
-                      {row.groups.map((g) => (
-                        <td key={g.group_id} className="py-1 pr-2">
-                          {g.submitted ? (
-                            <span className="text-green-600">Submitted</span>
-                          ) : (
-                            <span className="text-gray-400">Pending</span>
-                          )}
-                        </td>
+              <div className="overflow-x-auto">
+                <table className="text-sm w-full">
+                  <thead>
+                    <tr className="text-left text-muted-foreground border-b border-border">
+                      <th className="py-2 pr-4 font-medium">Assignment</th>
+                      {progress.matrix[0].groups.map((g) => (
+                        <th key={g.group_id} className="py-2 pr-4 font-medium">{g.name}</th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {progress.matrix.map((row) => (
+                      <tr key={row.assignment_id} className="border-b border-border last:border-0">
+                        <td className="py-2.5 pr-4">{row.title}</td>
+                        {row.groups.map((g) => (
+                          <td key={g.group_id} className="py-2.5 pr-4">
+                            {g.submitted ? (
+                              <Badge variant="success">Submitted</Badge>
+                            ) : (
+                              <Badge variant="muted">Pending</Badge>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <p className="text-sm text-gray-500">No data yet - create assignments and groups first.</p>
+              <p className="text-sm text-muted-foreground">No data yet. Create assignments and groups first.</p>
             )}
           </section>
         </div>
@@ -102,11 +124,12 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value }) {
+function Stat({ label, value, accent }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 text-center">
-      <p className="text-2xl font-semibold">{value}</p>
-      <p className="text-xs text-gray-500">{label}</p>
+    <div>
+      <p className={`font-display text-3xl font-semibold ${accent ? 'text-success' : ''}`}>{value}</p>
+      <p className="text-xs text-muted-foreground mt-1">{label}</p>
+      <Separator className="mt-3" />
     </div>
   );
 }
