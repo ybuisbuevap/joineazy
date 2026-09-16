@@ -104,6 +104,24 @@ npm install
 npm run dev              # listens on :5173
 ```
 
+## Design system
+
+The frontend uses shadcn-style components (Radix primitives + Tailwind, copied into
+`frontend/src/components/ui/`, not installed as an opaque package) with a custom token set instead
+of the library's default theme:
+
+- **Color**: near-black/near-white as the structural base, violet (`hsl(263 82% 57%)`) as the one
+  primary action color (buttons, links, active states), and lime (`hsl(77 90% 45%)`) reserved
+  specifically for "submitted" / success states — the progress bar fill and submitted badges use
+  it and nothing else does, so it carries meaning instead of being decoration.
+- **Type**: Space Grotesk for headings/display text, IBM Plex Sans for body and UI text — a
+  deliberate pairing rather than Inter everywhere.
+- **Dark mode**: a `ThemeProvider` toggles a `.dark` class on `<html>` and persists the choice to
+  `localStorage`; all colors are defined as CSS variables so both themes share one component tree.
+- Login/Register use a split hero layout instead of a centered generic card, and the two
+  dashboards avoid wrapping every block in an identical rounded shadow-card — borders and
+  dividers carry structure instead.
+
 ## Key design decisions
 
 - **JWT over sessions**: stateless auth keeps the backend simple to containerize and scale; the
