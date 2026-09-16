@@ -1,3 +1,78 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 85%;
+    --ring: 263 82% 57%;
+
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 40%;
+
+    --primary: 263 82% 57%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 0 0% 92%;
+    --accent-foreground: 0 0% 4%;
+
+    --success: 77 90% 45%;
+    --success-foreground: 0 0% 4%;
+
+    --destructive: 357 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --ink: 0 0% 4%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 96%;
+
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 96%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 22%;
+    --ring: 263 90% 68%;
+
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 65%;
+
+    --primary: 263 90% 68%;
+    --primary-foreground: 0 0% 4%;
+
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 96%;
+
+    --success: 77 100% 60%;
+    --success-foreground: 0 0% 4%;
+
+    --destructive: 357 80% 62%;
+    --destructive-foreground: 0 0% 4%;
+
+    --ink: 0 0% 96%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3 {
+    @apply font-display;
+  }
+}
