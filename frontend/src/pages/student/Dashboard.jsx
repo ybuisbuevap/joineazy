@@ -17,6 +17,9 @@ export default function StudentDashboard() {
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [progress, setProgress] = useState(null);
   const [pendingConfirm, setPendingConfirm] = useState(null);
+  const [memberMessage, setMemberMessage] = useState('');
+  const [memberError, setMemberError] = useState('');
+  const [members, setMembers] = useState([]);
 
   async function loadGroups() {
     const res = await api.get('/groups/mine');
@@ -35,6 +38,15 @@ export default function StudentDashboard() {
     setProgress(res.data);
   }
 
+  async function loadMembers(groupId) {
+    if (!groupId) {
+      setMembers([]);
+      return;
+    }
+    const res = await api.get(`/groups/${groupId}/members`);
+    setMembers(res.data);
+  }
+
   useEffect(() => {
     loadGroups();
     loadAssignments();
@@ -42,6 +54,7 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     loadProgress(activeGroupId);
+    loadMembers(activeGroupId);
   }, [activeGroupId]);
 
   async function createGroup(e) {
@@ -55,8 +68,19 @@ export default function StudentDashboard() {
   async function addMember(e) {
     e.preventDefault();
     if (!activeGroupId || !memberEmail.trim()) return;
-    await api.post(`/groups/${activeGroupId}/members`, { email: memberEmail });
-    setMemberEmail('');
+    setMemberMessage('');
+    setMemberError('');
+    try {
+      await api.post(`/groups/${activeGroupId}/members`, { email: memberEmail });
+      setMemberMessage(`Added ${memberEmail} to the group.`);
+      setMemberEmail('');
+      loadMembers(activeGroupId);
+    } catch (err) {
+      setMemberError(
+        err.response?.data?.error ||
+          'Failed to add member. Make sure they have registered a student account with this exact email.'
+      );
+    }
   }
 
   async function finalizeSubmission(assignmentId) {
@@ -119,7 +143,7 @@ export default function StudentDashboard() {
             {activeGroupId && (
               <>
                 <Separator className="mb-4" />
-                <form onSubmit={addMember} className="flex gap-2">
+                <form onSubmit={addMember} className="flex gap-2 mb-2">
                   <Input
                     value={memberEmail}
                     onChange={(e) => setMemberEmail(e.target.value)}
@@ -127,6 +151,22 @@ export default function StudentDashboard() {
                   />
                   <Button type="submit" variant="outline">Add</Button>
                 </form>
+                {memberMessage && <p className="text-xs text-success">{memberMessage}</p>}
+                {memberError && <p className="text-xs text-destructive">{memberError}</p>}
+
+                {members.length > 0 && (
+                  <>
+                    <Separator className="my-4" />
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Members</p>
+                    <ul className="space-y-1">
+                      {members.map((m) => (
+                        <li key={m.id} className="text-sm">
+                          {m.name} <span className="text-muted-foreground text-xs">({m.email})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </>
             )}
           </section>
@@ -148,7 +188,11 @@ export default function StudentDashboard() {
                     </a>
                   )}
 
-                  {pendingConfirm === a.id ? (
+                  {progress?.submittedAssignmentIds?.includes(a.id) ? (
+                    <div className="mt-3">
+                      <Badge variant="success">Submitted</Badge>
+                    </div>
+                  ) : pendingConfirm === a.id ? (
                     <div className="mt-3 flex gap-2">
                       <Button size="sm" variant="success" onClick={() => finalizeSubmission(a.id)}>
                         Confirm submission

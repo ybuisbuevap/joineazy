@@ -8,7 +8,7 @@ import { Badge } from '../../components/ui/badge.jsx';
 import { Separator } from '../../components/ui/separator.jsx';
 
 export default function AdminDashboard() {
-  const [form, setForm] = useState({ title: '', description: '', due_date: '', onedrive_link: '' });
+  const [form, setForm] = useState({ title: '', description: '', due_date: '', onedrive_link: '', target_group_id: '' });
   const [progress, setProgress] = useState(null);
   const [message, setMessage] = useState('');
 
@@ -29,8 +29,11 @@ export default function AdminDashboard() {
     e.preventDefault();
     setMessage('');
     try {
-      await api.post('/assignments', form);
-      setForm({ title: '', description: '', due_date: '', onedrive_link: '' });
+      await api.post('/assignments', {
+        ...form,
+        target_group_id: form.target_group_id ? Number(form.target_group_id) : null,
+      });
+      setForm({ title: '', description: '', due_date: '', onedrive_link: '', target_group_id: '' });
       setMessage('Assignment posted.');
       loadProgress();
     } catch (err) {
@@ -79,6 +82,20 @@ export default function AdminDashboard() {
                 <Label htmlFor="link">OneDrive link</Label>
                 <Input id="link" value={form.onedrive_link} onChange={update('onedrive_link')} />
               </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="target">Assign to</Label>
+                <select
+                  id="target"
+                  value={form.target_group_id}
+                  onChange={update('target_group_id')}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">All groups</option>
+                  {progress?.groups?.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit" className="w-full">Post assignment</Button>
             </form>
           </section>
@@ -119,6 +136,79 @@ export default function AdminDashboard() {
             )}
           </section>
         </div>
+
+        <Separator className="my-10" />
+
+        <section>
+          <h2 className="font-display font-semibold mb-4">Student-wise tracking</h2>
+          {progress && progress.studentMatrix?.length > 0 && progress.studentMatrix[0].students.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="text-sm w-full">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    <th className="py-2 pr-4 font-medium">Student</th>
+                    <th className="py-2 pr-4 font-medium">Group</th>
+                    {progress.studentMatrix.map((a) => (
+                      <th key={a.assignment_id} className="py-2 pr-4 font-medium">{a.title}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {progress.studentMatrix[0].students.map((s, idx) => (
+                    <tr key={s.student_id + s.group_name} className="border-b border-border last:border-0">
+                      <td className="py-2.5 pr-4">{s.student_name}</td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">{s.group_name}</td>
+                      {progress.studentMatrix.map((a) => {
+                        const cell = a.students[idx];
+                        return (
+                          <td key={a.assignment_id} className="py-2.5 pr-4">
+                            {cell.submitted ? (
+                              <Badge variant="success">
+                                {cell.isConfirmer ? 'Submitted' : 'Submitted (group)'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="muted">Pending</Badge>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No students in groups yet.</p>
+          )}
+        </section>
+
+        <Separator className="my-10" />
+
+        <section>
+          <h2 className="font-display font-semibold mb-4">Groups & members</h2>
+          {progress && progress.groups?.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {progress.groups.map((g) => (
+                <div key={g.id} className="border border-border rounded-md p-3">
+                  <p className="text-sm font-medium mb-1.5">{g.name}</p>
+                  {g.members.length > 0 ? (
+                    <ul className="space-y-0.5">
+                      {g.members.map((m) => (
+                        <li key={m.id} className="text-xs text-muted-foreground">
+                          {m.name} <span className="opacity-60">({m.email})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No members yet.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No groups created yet.</p>
+          )}
+        </section>
       </div>
     </div>
   );

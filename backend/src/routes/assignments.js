@@ -5,10 +5,22 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 const router = express.Router();
 router.use(requireAuth);
 
-// GET /assignments  -- everyone can view
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM assignments ORDER BY due_date ASC NULLS LAST');
+    if (req.user.role === 'admin') {
+      const result = await pool.query('SELECT * FROM assignments ORDER BY due_date ASC NULLS LAST');
+      return res.json(result.rows);
+    }
+
+    const result = await pool.query(
+      `SELECT a.* FROM assignments a
+       WHERE a.target_group_id IS NULL
+          OR a.target_group_id IN (
+            SELECT group_id FROM group_members WHERE user_id = $1
+          )
+       ORDER BY a.due_date ASC NULLS LAST`,
+      [req.user.userId]
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -16,7 +28,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /assignments  (admin only)  { title, description, due_date, onedrive_link, target_group_id }
 router.post('/', requireRole('admin'), async (req, res) => {
   const { title, description, due_date, onedrive_link, target_group_id } = req.body;
   if (!title) return res.status(400).json({ error: 'title is required' });
@@ -34,7 +45,6 @@ router.post('/', requireRole('admin'), async (req, res) => {
   }
 });
 
-// PUT /assignments/:id  (admin only)
 router.put('/:id', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { title, description, due_date, onedrive_link, target_group_id } = req.body;
