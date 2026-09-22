@@ -5,24 +5,29 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '../components/ui/button.jsx';
 import { Input } from '../components/ui/input.jsx';
 import { Label } from '../components/ui/label.jsx';
+import { Spinner } from '../components/ui/spinner.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       const res = await api.post('/auth/login', { email, password });
       login(res.data.token, res.data.user);
       navigate(res.data.user.role === 'admin' ? '/admin' : '/student');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.error || 'Login failed. Check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -34,10 +39,10 @@ export default function Login() {
         <span className="relative font-display text-sm tracking-tight opacity-70">Joineazy</span>
         <div className="relative">
           <h1 className="font-display text-5xl font-semibold leading-[1.05] mb-4">
-            Groups.<br />Assignments.<br /><span className="text-success">Done.</span>
+            Courses.<br />Groups.<br /><span className="text-success">Tracked.</span>
           </h1>
           <p className="text-background/70 max-w-xs text-sm">
-            Form your group, track what's due, confirm your submission. One place for the whole class.
+            Enroll in your courses, form your group, track what's due, confirm your submission.
           </p>
         </div>
         <p className="relative text-xs text-background/40">Student & Professor Portal</p>
@@ -47,27 +52,51 @@ export default function Login() {
         <div className="absolute top-6 right-6">
           <ThemeToggle />
         </div>
-        <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm" noValidate>
           <h2 className="font-display text-2xl font-semibold mb-1">Log in</h2>
           <p className="text-muted-foreground text-sm mb-6">Welcome back. Enter your details.</p>
 
           {error && (
-            <p className="text-destructive text-sm mb-4 border border-destructive/30 bg-destructive/10 rounded-md px-3 py-2">
+            <p role="alert" className="text-destructive text-sm mb-4 border border-destructive/30 bg-destructive/10 rounded-md px-3 py-2 animate-in fade-in slide-in-from-top-1 duration-200">
               {error}
             </p>
           )}
 
           <div className="space-y-1.5 mb-4">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              required
+            />
           </div>
 
           <div className="space-y-1.5 mb-6">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+            />
           </div>
 
-          <Button type="submit" className="w-full">Log in</Button>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Spinner className="mr-2" /> Logging in...
+              </>
+            ) : (
+              'Log in'
+            )}
+          </Button>
 
           <p className="text-sm text-muted-foreground mt-5">
             No account?{' '}

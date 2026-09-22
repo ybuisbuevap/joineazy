@@ -1,5 +1,9 @@
 const jwt = require('jsonwebtoken');
 
+// In production a real secret is mandatory. The fallback only exists for local development.
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set in production');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 function requireAuth(req, res, next) {
