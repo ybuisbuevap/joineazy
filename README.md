@@ -159,13 +159,3 @@ instead of the library's default theme.
 - **Build time versus runtime env vars**: `VITE_API_URL` is passed as a Docker build ARG rather
   than a runtime environment variable, since Vite inlines env vars into the static bundle at
   build time; setting it at container runtime would have no effect.
-
-## What's scoped out (given the timeline)
-
-- Charting library for admin analytics, replaced with summary count stat cards and status
-  tables, which satisfies the "basic charts or summary counts" requirement without the added
-  build time.
-- Password reset and email verification, out of scope for a technical task with no email service.
-- A teacher currently sees every group's roster and the full student wise table regardless of
-  which groups an assignment was actually targeted at; the tracking tables are not filtered down
-  per assignment's target group.
